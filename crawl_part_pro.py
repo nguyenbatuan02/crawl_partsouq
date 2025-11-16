@@ -58,16 +58,17 @@ class PartsouqHTMLSaver:
         self.save_json(data, backup_path)
         print(f"💾 BACKUP: {backup_path}")
     
-    def set_current_model_folder(self, brand, car_type, model):
+    def set_current_model_folder(self, brand, car_type, model, model_idx):
         """Set folder cho model hiện tại"""
         base_model_folder = os.path.join(
             self.html_folder,
             self._safe_filename(brand),
             self._safe_filename(car_type),
-            self._safe_filename(model)
+            f"{self._safe_filename(model)}_Model{model_idx}" 
         )
         
-        self.current_model_folder = self._get_unique_folder(base_model_folder)
+        self.current_model_folder = base_model_folder
+        os.makedirs(base_model_folder, exist_ok=True)
         print(f"  📁 Model folder: {self.current_model_folder}")
     
     def _get_unique_folder(self, base_path):
@@ -255,7 +256,7 @@ def worker_crawl_model(worker_id, model_data, brand_name, car_type_name, car_typ
         model_name = model_data['name']
         
         # SET FOLDER CHO MODEL
-        saver.set_current_model_folder(brand_name, car_type_name, model_name)
+        saver.set_current_model_folder(brand_name, car_type_name, model_name, model_idx)
         
         model_start_time = time.time()
         

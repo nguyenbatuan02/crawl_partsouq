@@ -51,17 +51,18 @@ class PartsouqHTMLSaver:
         self.save_json(data, backup_path)
         print(f"💾 BACKUP: {backup_path}")
     
-    def set_current_model_folder(self, brand, car_type, model):
+    def set_current_model_folder(self, brand, car_type, model, model_idx):
         """Set folder cho model hiện tại - gọi 1 lần khi bắt đầu model mới"""
         base_model_folder = os.path.join(
             self.html_folder,
             self._safe_filename(brand),
             self._safe_filename(car_type),
-            self._safe_filename(model)
+            f"{self._safe_filename(model)}_Model{model_idx}"
         )
         
-        # Check unique và lưu lại
-        self.current_model_folder = self._get_unique_folder(base_model_folder)
+        # Tạo folder luôn, không cần check unique nữa
+        self.current_model_folder = base_model_folder
+        os.makedirs(base_model_folder, exist_ok=True)
         print(f"  📁 Model folder: {self.current_model_folder}")
     
     def _get_unique_folder(self, base_path):
@@ -286,7 +287,7 @@ class PartsouqHTMLSaver:
                     print(f"\n  📦 Model [{model_idx}]: {model_name}")
                     
                     # SET FOLDER CHO MODEL NÀY - CHỈ 1 LẦN
-                    self.set_current_model_folder(brand_name, car_type_name, model_name)
+                    self.set_current_model_folder(brand_name, car_type_name, model_name, model_idx)
                     
                     model_start_time = time.time()
                     
