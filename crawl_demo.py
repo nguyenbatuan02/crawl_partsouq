@@ -418,7 +418,7 @@ if __name__ == "__main__":
     crawler = PartsouqCrawler()
     
     
-    TARGET_BRAND = "Toyota"  # Đổi tên ở đây
+    TARGET_BRAND = "Suzuki"  # Đổi tên ở đây
     
     try:
         
@@ -514,7 +514,7 @@ if __name__ == "__main__":
                                 print(f"  Lỗi crawl model {model['model']}: {e}")
                                 continue
                         
-                        target_brand_data['car_types'].append(car_type_data)
+                    
                         
                        
                         
