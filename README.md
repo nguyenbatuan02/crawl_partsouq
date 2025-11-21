@@ -3,3 +3,8 @@ chạy file crawl_demo.py -> nếu ngừng thì tìm file backup gần nhất d�
 chạy file crawl_part.py -> nếu ngừng tìm file backup gần nhất dạng backups/Brand_CarType{x}_Model{y}.json thay thế vào file crawl_part_next.py chạy tiếp
 
 nhanh -> chạy crawl_part_pro.py -> giảm x2 x3 thời gian
+
+
+-- crawl web https://www.megazip.net 
+1. cài thư viện pip install requests beautifulsoup4
+2. chạy file crawl-mega.py (thay thế tên hãng trước khi cào)
