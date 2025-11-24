@@ -43,7 +43,8 @@ class MegazipCrawler:
         models = []
         model_links = soup.find_all('a', class_='s-catalog__model-link')
         
-        for link in model_links:
+        total_models = len(model_links)
+        for idx, link in enumerate(model_links, 1):
             model_info = {
                 'name': link.text.strip(),
                 'url': urljoin(self.base_url, link.get('href')),
@@ -51,7 +52,7 @@ class MegazipCrawler:
                 'frames': []
             }
             models.append(model_info)
-            print(f"{model_info['name']} (ID: {model_info['data_id']})")
+            print(f"[{idx}/{total_models}] {model_info['name']} (ID: {model_info['data_id']})")  
         
         print(f"\n  Total: {len(models)} models")
         return models
@@ -71,7 +72,8 @@ class MegazipCrawler:
         if frame_container:
             frame_links = frame_container.find_all('a', class_='s-catalog__model-link')
             
-            for link in frame_links:
+            total_frames = len(frame_links)  
+            for idx, link in enumerate(frame_links, 1): 
                 frame_info = {
                     'name': link.text.strip(),
                     'url': urljoin(self.base_url, link.get('href')) + '#year=all&engine-1=all&atm-mtm=all',
@@ -79,7 +81,7 @@ class MegazipCrawler:
                     'variants': []
                 }
                 frames.append(frame_info)
-                print(f"{frame_info['name']} (ID: {frame_info['data_id']})")
+                print(f"[{idx}/{total_frames}] {frame_info['name']} (ID: {frame_info['data_id']})")
         
         print(f"  Total: {len(frames)} frames")
         return frames
@@ -97,11 +99,12 @@ class MegazipCrawler:
         variants = []
         variant_items = soup.find_all('li', class_='s-catalog__body-variants-item')
         
-        for item in variant_items:
+        total_variants = len(variant_items)  
+        for idx, item in enumerate(variant_items, 1):  
             variant_data = self.parse_variant_item(item)
             if variant_data:
                 variants.append(variant_data)
-                print(f"{variant_data['code']} | {variant_data['year']}")
+                print(f"[{idx}/{total_variants}] {variant_data['code']} | {variant_data['year']}") 
         
         print(f"    Total: {len(variants)} variants")
         return variants
@@ -144,10 +147,13 @@ class MegazipCrawler:
             print(f"    ✗ Error parsing variant: {str(e)}")
             return None
     
-    def get_variant_part_groups(self, variant, model_name, frame_name):
+    def get_variant_part_groups(self, variant, model_name, frame_name, variant_index=None, total_variants=None):
         """Get part groups for a variant"""
         print(f"\n    {'·'*60}")
-        print(f" PART GROUPS FOR {variant['code']}")
+        if variant_index and total_variants:
+            print(f" PART GROUPS FOR {variant['code']} [{variant_index}/{total_variants}]")
+        else:
+            print(f" PART GROUPS FOR {variant['code']}")
         print(f"    {'·'*60}")
         
         soup = self.get_page(variant['url'])
@@ -157,11 +163,12 @@ class MegazipCrawler:
         part_groups = []
         group_items = soup.find_all('li', class_='part-group__item')
         
-        for item in group_items:
+        total_groups = len(group_items) 
+        for idx, item in enumerate(group_items, 1):
             group_data = self.parse_part_group_item(item)
             if group_data:
                 part_groups.append(group_data)
-                print(f"{group_data['name']} (ID: {group_data['id']})")
+                print(f"[{idx}/{total_groups}] {group_data['name']} (ID: {group_data['id']})") 
         
         print(f"      Total: {len(part_groups)} part groups")
         return part_groups
@@ -280,6 +287,8 @@ class MegazipCrawler:
             model['frames'] = frames
             total_stats['models'] += 1
             total_stats['frames'] += len(frames)
+
+            
             
             if max_frames:
                 frames = frames[:max_frames]
@@ -291,9 +300,9 @@ class MegazipCrawler:
                 
                 if max_variants:
                     variants = variants[:max_variants]
-                
+                total_vars = len(variants)
                 for k, variant in enumerate(variants, 1):
-                    part_groups = self.get_variant_part_groups(variant, model['name'], frame['name'])
+                    part_groups = self.get_variant_part_groups(variant, model['name'], frame['name'], k, total_vars)
                     variant['part_groups'] = part_groups
                     total_stats['part_groups'] += len(part_groups)
                     
@@ -301,11 +310,22 @@ class MegazipCrawler:
                         part_groups = part_groups[:max_part_groups]
                     
                     if crawl_parts:
+                        total_pg = len(part_groups)
                         for l, part_group in enumerate(part_groups, 1):
+                            print(f"\n      [PART GROUP {l}/{total_pg}]")
                             parts = self.get_part_group_parts(part_group, variant['code'])
                             part_group['parts'] = parts
                             total_stats['parts'] += len(parts)
-        
+            backup_filename = f'backup_model_{i}.json'
+            self.save_backup({
+                'brand': 'Toyota',
+                'statistics': total_stats,
+                'current_model': i,
+                'total_models': len(models),
+                'models': models[:i]
+            }, backup_filename)
+            print(f"\nBackup saved: {backup_filename}")
+                
         result = {
             'brand': 'Toyota',
             'statistics': total_stats,
@@ -314,13 +334,19 @@ class MegazipCrawler:
         
         return result
     
-    def save_results(self, results, filename='toyota_complete_data.json'):
+    
+    def save_results(self, results, filename):
         """Save results to JSON"""
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
         print(f"\n{'='*80}")
         print(f"✓ Saved to: {filename}")
         print(f"{'='*80}")
+
+    def save_backup(self, results, filename):
+        """Save backup without printing banner"""
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
     
     def print_summary(self, results):
         """Print crawl summary"""
